@@ -52,6 +52,13 @@ export async function POST(request: Request) {
       );
     }
 
+    if (english.length > 255 || turkish.length > 255) {
+      return NextResponse.json(
+        { error: 'Words cannot exceed 255 characters' },
+        { status: 400 }
+      );
+    }
+
     // Verify ownership of the deck
     const deck = await prisma.deck.findUnique({ where: { id: deckId } });
     if (!deck || deck.userId !== session.userId) {

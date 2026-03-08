@@ -1,8 +1,14 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-change-in-production';
-const encodedSecret = new TextEncoder().encode(JWT_SECRET);
+const isBuildPhase = process.env.npm_lifecycle_event === 'build';
+const JWT_SECRET = process.env.JWT_SECRET || (isBuildPhase ? 'build-fallback-secret' : null);
+
+if (!JWT_SECRET && !isBuildPhase) {
+  throw new Error('FATAL: JWT_SECRET environment variable is not defined.');
+}
+
+const encodedSecret = new TextEncoder().encode(JWT_SECRET || 'fallback');
 
 export interface SessionPayload {
   userId: string;

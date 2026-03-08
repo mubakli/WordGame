@@ -2,11 +2,20 @@ import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { createSession } from '@/lib/session';
+import { RateLimiter } from '@/lib/rate-limit';
 
 const prisma = new PrismaClient();
+const limiter = new RateLimiter(5, 60 * 1000); // 5 requests per 60 seconds (1 minute)
 
 export async function POST(req: Request) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'unknown';
+    if (limiter.isRateLimited(ip)) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429 }
+      );
+    }
     const { username, password } = await req.json();
 
     if (!username || !password) {
